@@ -1,5 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, beforeEach, expect, jest } from '@jest/globals';
 import { TransfersController } from './transfers.controller';
+import { TransfersService } from './transfers.service';
+import { Test, TestingModule } from '@nestjs/testing';
 
 describe('TransfersController', () => {
   let controller: TransfersController;
@@ -7,6 +9,12 @@ describe('TransfersController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TransfersController],
+      providers: [
+        {
+          provide: TransfersService,
+          useValue: { create: jest.fn() },
+        },
+      ],
     }).compile();
 
     controller = module.get<TransfersController>(TransfersController);
