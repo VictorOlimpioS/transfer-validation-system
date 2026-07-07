@@ -1,12 +1,17 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { TransfersService } from './transfers.service';
+import { ClientProxy } from '@nestjs/microservices';
+
+const mockClient = {
+  emit: jest.fn(),
+};
 
 describe('TransfersService', () => {
   let service: TransfersService;
 
   beforeEach(() => {
-    service = new TransfersService();
+    service = new TransfersService(mockClient as unknown as ClientProxy);
   });
 
   it('should return a transferId and PROCESSING status', () => {
@@ -18,6 +23,13 @@ describe('TransfersService', () => {
 
     const result = service.create(mockDto);
 
+    //Testing service create methood calling
+    expect(mockClient.emit).toHaveBeenLastCalledWith(
+      'transfer_created',
+      expect.any(Object),
+    );
+
+    // Testing service create method return
     expect(result.transferId).toBeDefined();
     expect(result.status).toBe('PROCESSING');
   });
