@@ -2,6 +2,10 @@ import { describe, it, beforeEach, expect } from '@jest/globals';
 import { DifferentAccounts } from './different-accounts.validator';
 import { ValidationArguments } from 'class-validator';
 
+const mockArguments = {
+  property: 'targetAccountId',
+} as ValidationArguments;
+
 describe('DifferentAccounts', () => {
   let validator: DifferentAccounts;
 
@@ -29,5 +33,12 @@ describe('DifferentAccounts', () => {
     const result = validator.validate(value, args);
 
     expect(result).toBe(false);
+  });
+
+  it('should return the default error message', () => {
+    const result = validator.defaultMessage!(mockArguments);
+    expect(result).toBe(
+      'targetAccountId cannot be the same as the source account',
+    );
   });
 });
