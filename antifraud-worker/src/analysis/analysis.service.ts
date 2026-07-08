@@ -1,25 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 
-type TransferData = {
+export type TransferData = {
   transferId: string;
   amount: number;
 };
 
 @Injectable()
 export class AnalysisService {
-  analyzeTransfer(data: TransferData) {
-    const { transferId, amount } = data;
+  constructor(@Inject('GATEWAY_CLIENT') private readonly client: ClientProxy) {}
 
-    if (amount >= 10000) {
-      console.log(
-        `[ALERTA] Transferência ${transferId} REJEITADA por suspeita de fraude. Valor: ${amount}`,
+  analyzeTransfer(transfer: TransferData) {
+    if (
+      !transfer ||
+      !transfer.transferId ||
+      transfer.amount == null ||
+      Number.isNaN(transfer.amount)
+    ) {
+      console.error(
+        '[ERROR] Received invalid payload, discarding message:',
+        transfer,
       );
-      // No futuro, aqui atualizaremos o banco de dados para REJECTED
+      return;
+    }
+
+    const isFraud = transfer.amount > 10000;
+    const isInvalidAmount = transfer.amount <= 0;
+
+    if (isFraud || isInvalidAmount) {
+      const reason = isFraud ? 'fraud suspicion' : 'invalid amount';
+
+      console.log(
+        `[ALERT] Transfer ${transfer.transferId} REJECTED due to ${reason}. Amount: ${transfer.amount}`,
+      );
+      this.client.emit('transfer_evaluated', {
+        transferId: transfer.transferId,
+        status: 'REJECTED',
+      });
     } else {
       console.log(
-        `[SUCESSO] Transferência ${transferId} APROVADA. Valor: ${amount}`,
+        `[SUCCESS] Transfer ${transfer.transferId} APPROVED. Amount: ${transfer.amount}`,
       );
-      // No futuro, aqui atualizaremos o banco de dados para APPROVED
+      this.client.emit('transfer_evaluated', {
+        transferId: transfer.transferId,
+        status: 'APPROVED',
+      });
     }
   }
 }

@@ -9,3 +9,37 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+
+  postgres:
+    image: postgres:15
+    container_name: banco-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: antifraud_db
+
+  transfer-gateway:
+    build:
+      context: ./transfer-gateway
+      dockerfile: Dockerfile
+    container_name: transfer-gateway-app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://root:rootpassword@postgres:5432/antifraud_db?schema=public
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  antifraud-worker:
+    build:
+      context: ./antifraud-worker
+      dockerfile: Dockerfile
+    container_name: antifraud-worker-app
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      - rabbitmq
