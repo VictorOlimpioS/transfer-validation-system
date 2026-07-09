@@ -11,6 +11,6 @@ export class DifferentAccounts implements ValidatorConstraintInterface {
     return value !== dto.fromAccount;
   }
   defaultMessage?(validationArguments?: ValidationArguments): string {
-    return `${validationArguments?.property} não pode ser igual à conta de origem`;
+    return `${validationArguments?.property} cannot be the same as the source account`;
   }
 }
