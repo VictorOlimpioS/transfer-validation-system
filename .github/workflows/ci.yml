@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Start Infrastructure
+        run: docker-compose up -d
+
+      - name: Wait for services to start
+        run: sleep 10
+
+      - name: Worker Unit Tests
+        working-directory: ./antifraud-worker
+        run: |
+          npm install
+          npm run test:cov
+
+      - name: Gateway Database Setup
+        working-directory: ./transfer-gateway
+        run: |
+          npm install
+          npx prisma generate
+          npx prisma db push
+        env:
+          DATABASE_URL: "postgresql://root:rootpassword@localhost:5432/antifraud_db?schema=public"
+
+      - name: Gateway Tests
+        working-directory: ./transfer-gateway
+        run: |
+          npm run test:cov
+          npm run test:e2e
+        env:
+          DATABASE_URL: "postgresql://root:rootpassword@localhost:5432/antifraud_db?schema=public"
