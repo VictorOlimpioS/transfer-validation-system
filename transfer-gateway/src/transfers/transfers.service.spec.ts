@@ -10,7 +10,8 @@ const mockClient = {
 
 const mockPrisma = {
   transfer: {
-    create: jest.fn<() => Promise<{ id: string; status: string }>>(),
+    create: jest.fn<any>(),
+    update: jest.fn<any>(),
   },
 };
 
@@ -48,5 +49,32 @@ describe('TransfersService', () => {
     // Testing service create method return
     expect(result.transferId).toBeDefined();
     expect(result.status).toBe('PROCESSING');
+  });
+
+  it('should update transfer status and save it on DB', async () => {
+    const updatePayload = {
+      transferId: '7d3e3839-2f16-4efe-9012-b4d052295d02',
+      status: 'APPROVED',
+    };
+
+    mockPrisma.transfer.update.mockResolvedValue({
+      id: updatePayload.transferId,
+      status: updatePayload.status,
+    });
+
+    const result = await service.updateStatus(
+      updatePayload.transferId,
+      updatePayload.status,
+    );
+
+    expect(mockPrisma.transfer.update).toHaveBeenCalledWith({
+      where: { id: updatePayload.transferId },
+      data: { status: updatePayload.status },
+    });
+
+    expect(result).toEqual({
+      id: updatePayload.transferId,
+      status: updatePayload.status,
+    });
   });
 });

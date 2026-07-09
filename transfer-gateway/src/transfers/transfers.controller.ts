@@ -33,7 +33,6 @@ export class TransfersController {
       await this.transfersService.updateStatus(data.transferId, data.status);
 
       channel.ack(originalMsg);
-      await this.transfersService.updateStatus(data.transferId, data.status);
     } catch (error) {
       console.error(
         `[ERRO CRÍTICO] Falha ao atualizar banco para a transferência ${data.transferId}:`,
